@@ -1,6 +1,7 @@
 # Advent Of Code - 2023
-| Day | Title          | Part 1   | Part 2   |
-|:---:|:--------------:|:--------:|:--------:|
-| 1   | Trebuchet?!    | `Solved` | `Solved` |
-| 2   | Cube Conundrum | `Solved` | `Solved` |
-| 3   |                | n/a      | n/a      |
+| Day | Title          | Part 1   | Part 2   | Comment                                                           | 
+|:---:|:--------------:|:--------:|:--------:|:-----------------------------------------------------------------:|
+| 1   | Trebuchet?!    | ✅      | ✅       |                                                                   |
+| 2   | Cube Conundrum | ✅      | ✅       |                                                                   |
+| 3   | Gear Ratios    | ✅      | ✅       | Possibly the least efficient code I have ever written. `Matrices` |
+| 4   |                | n/a      | n/a      |                                                                   |

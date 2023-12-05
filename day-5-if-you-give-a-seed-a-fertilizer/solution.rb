@@ -1,40 +1,135 @@
-## Reads in the puzzle data and splits it into each line, then removes \n from each line
-file_path = File.expand_path("../data.txt", __FILE__)
-puzzle_input = File.read(file_path)
+require 'pry'
 
-# Puts all seed values into an array
-seeds, *maps = puzzle_input.split("\n\n")
-seeds = seeds.scan(/\d+/).map(&:to_i)
+lines = File.readlines('data.txt').map(&:chomp)
 
-maps.map! {
-  map = {}
+seed_to_soil_lines = []
+soil_to_fertilizer_lines = []
+fertilizer_to_water_lines = []
+water_to_light_lines = []
+light_to_temperature_lines = []
+temperature_to_humidity_lines = []
+humidity_to_location_lines = []
 
-  _1.split("\n")[1..-1].each do |line|
-    dest, source, length = line.split.map(&:to_i)
-
-    range = source..(source + length)
-    offset = dest - source
-
-    map[range] = offset
+current_map = nil
+lines.each do |line|
+  next if line.empty?
+  if line.include?('map')
+    current_map = "#{line.split(' ')[0].gsub('-', '_')}_lines"
+    next
   end
 
-  map
-}
+  if current_map
+    eval("#{current_map} << line")
+  end
+end
 
-seeds
-  .map { |source|
-    maps.reduce(source) do |source, map|
-      range, offset = map.find do |range, offset|
-        range.include?(source)
-      end
+def fill_ranges(lines)
+  result = {}
+  lines.each do |line|
+    destination, source, range = line.split(' ').map(&:to_i)
 
-      source += offset if range
-      source
+    result[source...(source + range)] = destination...(destination + range)
+  end
+  result
+end
+
+def find_destination(ranges, n)
+  ranges.each do |source, destination|
+    if source.include?(n)
+      return destination.min + (n - source.min)
     end
-  }
-  .min
-  .tap { puts _1 }
+  end
+  n
+end
 
-  # Answer = 806029445
+seed_to_soil_ranges = fill_ranges(seed_to_soil_lines)
+soil_to_fertilizer_ranges = fill_ranges(soil_to_fertilizer_lines)
+fertilizer_to_water_ranges = fill_ranges(fertilizer_to_water_lines)
+water_to_light_ranges = fill_ranges(water_to_light_lines)
+light_to_temperature_ranges = fill_ranges(light_to_temperature_lines)
+temperature_to_humidity_ranges = fill_ranges(temperature_to_humidity_lines)
+humidity_to_location_ranges = fill_ranges(humidity_to_location_lines)
+
+seeds = lines.first.gsub('seeds: ', '').split(' ').map(&:to_i)
+locations = []
+
+seeds.each do |seed|
+  location = find_destination(seed_to_soil_ranges, seed)
+  location = find_destination(soil_to_fertilizer_ranges, location)
+  location = find_destination(fertilizer_to_water_ranges, location)
+  location = find_destination(water_to_light_ranges, location)
+  location = find_destination(light_to_temperature_ranges, location)
+  location = find_destination(temperature_to_humidity_ranges, location)
+  location = find_destination(humidity_to_location_ranges, location)
+  locations << location
+end
+
+puts locations.min
+
+# Part 1
+# Answer = 806029445
 
 ###### PART 2 ######
+
+seed_to_soil_lines = []
+soil_to_fertilizer_lines = []
+fertilizer_to_water_lines = []
+water_to_light_lines = []
+light_to_temperature_lines = []
+temperature_to_humidity_lines = []
+humidity_to_location_lines = []
+
+
+seed_numbers = lines.first.gsub('seeds: ', '').split(' ').map(&:to_i)
+seed_ranges = []
+locations = []
+
+
+seed_numbers.each.with_index do |seed, i|
+  if i % 2 == 0
+    seed_ranges << (seed..(seed + seed_numbers[i + 1] - 1))
+  end
+end
+
+def range_intersection(range1, range2)
+  return nil if (range1.max < range2.begin || range2.max < range1.begin)
+  [range1.begin, range2.begin].max..[range1.max, range2.max].min
+end
+
+def find_destination_ranges(source_ranges, destination_ranges)
+  result = []
+  source_ranges.uniq.each do |source_range|
+    destination_ranges.each.with_index do |(source_range_temp, destination_range), i|
+      if (intersection = range_intersection(source_range, source_range_temp))
+        result << ((intersection.min - source_range_temp.min + destination_range.min)..(intersection.max - source_range_temp.max + destination_range.max))
+        if intersection.size == source_range.size
+          break
+        else
+          if intersection.max < source_range.max
+            source_range = ((intersection.max + 1)..source_range.max)
+          else
+            source_range = ((source_range.min)..(intersection.min - 1))
+          end
+        end
+      elsif i == destination_ranges.size - 1
+        result << source_range
+      end
+    end
+  end
+  result
+end
+
+results = []
+
+soil_ranges = find_destination_ranges(seed_ranges, seed_to_soil_ranges)
+fertilizer_ranges = find_destination_ranges(soil_ranges, soil_to_fertilizer_ranges)
+water_ranges = find_destination_ranges(fertilizer_ranges, fertilizer_to_water_ranges)
+light_ranges = find_destination_ranges(water_ranges, water_to_light_ranges)
+temperature_ranges = find_destination_ranges(light_ranges, light_to_temperature_ranges)
+humidity_ranges = find_destination_ranges(temperature_ranges, temperature_to_humidity_ranges)
+location_ranges = find_destination_ranges(humidity_ranges, humidity_to_location_ranges)
+
+puts location_ranges.map(&:min).min
+
+# Part 2
+# Answer = 59370572
